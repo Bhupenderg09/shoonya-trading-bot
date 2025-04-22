@@ -1,1 +1,7 @@
-{}
+{
+    "instrument_type": "option",
+    "index": "NIFTY",
+    "trade_type": "buy",
+    "expiry": "current_week",
+    "strike": "ATM"
+  }
