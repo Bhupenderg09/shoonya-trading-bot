@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template
-from shoonyapy import NorenApi
+from shoonyapy import ShoonyaApi
 import json
 import logging
 
@@ -23,7 +23,7 @@ def login():
         data = request.json
         if not all(key in data for key in ['userid', 'password', 'twoFA', 'vendor_code', 'api_secret', 'imei']):
             return jsonify({'status': 'error', 'message': 'Missing required fields'}), 400
-        shoonya_api = NorenApi(
+        shoonya_api = ShoonyaApi(
             host='https://api.shoonya.com/NorenWClientTP/',
             websocket='wss://api.shoonya.com/NorenWSTP/',
             eodhost='https://api.shoonya.com/chartApi/getdata/'
