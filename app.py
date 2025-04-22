@@ -1,7 +1,11 @@
 from flask import Flask, request, jsonify, render_template
-from NorenApi import NorenApi
+from shoonyapy import NorenApi
 import json
-from shoonyapy import ShoonyaApi
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -15,50 +19,72 @@ def index():
 @app.route('/login', methods=['POST'])
 def login():
     global shoonya_api
-    data = request.json
-    shoonya_api = NorenApi(
-        host='https://api.shoonya.com/NorenWClientTP/',
-        websocket='wss://api.shoonya.com/NorenWSTP/',
-        eodhost='https://api.shoonya.com/chartApi/getdata/'
-    )
-    resp = shoonya_api.login(
-        userid=data['userid'],
-        password=data['password'],
-        twoFA=data['twoFA'],
-        vendor_code=data['vendor_code'],
-        api_secret=data['api_secret'],
-        imei=data['imei']
-    )
-    if resp:
-        return jsonify({'status': 'success', 'jKey': resp})
-    return jsonify({'status': 'error', 'message': 'Login failed'})
+    try:
+        data = request.json
+        if not all(key in data for key in ['userid', 'password', 'twoFA', 'vendor_code', 'api_secret', 'imei']):
+            return jsonify({'status': 'error', 'message': 'Missing required fields'}), 400
+        shoonya_api = NorenApi(
+            host='https://api.shoonya.com/NorenWClientTP/',
+            websocket='wss://api.shoonya.com/NorenWSTP/',
+            eodhost='https://api.shoonya.com/chartApi/getdata/'
+        )
+        resp = shoonya_api.login(
+            userid=data['userid'],
+            password=data['password'],
+            twoFA=data['twoFA'],
+            vendor_code=data['vendor_code'],
+            api_secret=data['api_secret'],
+            imei=data['imei']
+        )
+        if resp:
+            logger.info(f"Login successful for user {data['userid']}")
+            return jsonify({'status': 'success', 'jKey': resp})
+        return jsonify({'status': 'error', 'message': 'Login failed'}), 401
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}")
+        return jsonify({'status': 'error', 'message': f'Login error: {str(e)}'}), 500
 
 @app.route('/balance')
 def get_balance():
-    if shoonya_api:
+    if not shoonya_api:
+        return jsonify({'error': 'Not logged in'}), 401
+    try:
         balance = shoonya_api.get_limits()
         return jsonify(balance)
-    return jsonify({'error': 'Not logged in'})
+    except Exception as e:
+        logger.error(f"Balance error: {str(e)}")
+        return jsonify({'error': f'Failed to fetch balance: {str(e)}'}), 500
 
 @app.route('/positions')
 def get_positions():
-    if shoonya_api:
+    if not shoonya_api:
+        return jsonify({'error': 'Not logged in'}), 401
+    try:
         positions = shoonya_api.get_positions()
         return jsonify(positions)
-    return jsonify({'error': 'Not logged in'})
+    except Exception as e:
+        logger.error(f"Positions error: {str(e)}")
+        return jsonify({'error': f'Failed to fetch positions: {str(e)}'}), 500
 
 @app.route('/orders')
 def get_orders():
-    if shoonya_api:
+    if not shoonya_api:
+        return jsonify({'error': 'Not logged in'}), 401
+    try:
         orders = shoonya_api.get_order_book()
         return jsonify(orders)
-    return jsonify({'error': 'Not logged in'})
+    except Exception as e:
+        logger.error(f"Orders error: {str(e)}")
+        return jsonify({'error': f'Failed to fetch orders: {str(e)}'}), 500
 
 @app.route('/square_off', methods=['POST'])
 def square_off():
-    data = request.json
-    if shoonya_api:
-        # Implement square-off logic (simplified)
+    if not shoonya_api:
+        return jsonify({'error': 'Not logged in'}), 401
+    try:
+        data = request.json
+        if not all(key in data for key in ['symbol', 'quantity']):
+            return jsonify({'status': 'error', 'message': 'Missing symbol or quantity'}), 400
         result = shoonya_api.place_order(
             buy_or_sell='S' if data['quantity'] > 0 else 'B',
             product_type='I',
@@ -69,48 +95,64 @@ def square_off():
             price_type='MKT',
             price=0
         )
+        logger.info(f"Square-off order placed: {data['symbol']}, quantity: {data['quantity']}")
         return jsonify(result)
-    return jsonify({'error': 'Not logged in'})
+    except Exception as e:
+        logger.error(f"Square-off error: {str(e)}")
+        return jsonify({'status': 'error', 'message': f'Square-off failed: {str(e)}'}), 500
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     if not shoonya_api:
-        return jsonify({'error': 'Not logged in'})
-    signal = request.json
-    with open('config.json', 'r') as f:
-        config = json.load(f)
-    
-    instrument_type = config['instrument_type']
-    index = config['index']
-    trade_type = config['trade_type']
-    expiry = config['expiry']
-    strike = config['strike']
+        return jsonify({'error': 'Not logged in'}), 401
+    try:
+        signal = request.json
+        if not signal or 'signal' not in signal or 'symbol' not in signal:
+            return jsonify({'status': 'error', 'message': 'Invalid webhook payload'}), 400
+        
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+        
+        instrument_type = config.get('instrument_type')
+        index = config.get('index')
+        trade_type = config.get('trade_type')
+        expiry = config.get('expiry')
+        strike = config.get('strike')
 
-    symbol = index
-    if instrument_type == 'option':
-        # Simplified strike logic (extend with market data)
-        symbol += f" {expiry.upper()} {strike.upper()}"
+        if not all([instrument_type, index, trade_type, expiry]):
+            return jsonify({'status': 'error', 'message': 'Incomplete configuration'}), 400
 
-    buy_sell = 'B' if trade_type == 'buy' else 'S'
-    quantity = 50  # Example
-    result = shoonya_api.place_order(
-        buy_or_sell=buy_sell,
-        product_type='I',
-        exchange='NFO',
-        tradingsymbol=symbol,
-        quantity=quantity,
-        discloseqty=0,
-        price_type='MKT',
-        price=0
-    )
-    return jsonify(result)
+        symbol = index
+        if instrument_type == 'option':
+            # Placeholder: Replace with market data for accurate symbol
+            symbol += f" {expiry.upper()} {strike.upper()}"
+
+        buy_sell = 'B' if trade_type == 'buy' else 'S'
+        quantity = 50  # Consider making configurable
+        result = shoonya_api.place_order(
+            buy_or_sell=buy_sell,
+            product_type='I',
+            exchange='NFO',
+            tradingsymbol=symbol,
+            quantity=quantity,
+            discloseqty=0,
+            price_type='MKT',
+            price=0
+        )
+        logger.info(f"Webhook order placed: {symbol}, buy/sell: {buy_sell}, quantity: {quantity}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Webhook error: {str(e)}")
+        return jsonify({'status': 'error', 'message': f'Webhook failed: {str(e)}'}), 500
 
 @app.route('/save_config', methods=['POST'])
 def save_config():
-    config = request.json
-    with open('config.json', 'w') as f:
-        json.dump(config, f)
-    return jsonify({'status': 'success'})
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    try:
+        config = request.json
+        with open('config.json', 'w') as f:
+            json.dump(config, f)
+        logger.info("Configuration saved")
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        logger.error(f"Config save error: {str(e)}")
+        return jsonify({'status': 'error', 'message': f'Failed to save config: {str(e)}'}), 500
