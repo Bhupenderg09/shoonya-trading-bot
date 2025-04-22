@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoonya Trading Bot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <!-- Login Page -->
+    <div id="login-page" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6 text-center">Shoonya Login</h2>
+            <div id="login-error" class="text-red-500 mb-4 hidden"></div>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label class="block text-gray-700">User ID</label>
+                    <input type="text" id="user-id" class="w-full p-2 border rounded" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Password</label>
+                    <input type="password" id="password" class="w-full p-2 border rounded" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">TOTP</label>
+                    <input type="text" id="totp" class="w-full p-2 border rounded" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Vendor Code</label>
+                    <input type="text" id="vendor-code" class="w-full p-2 border rounded" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">API Key</label>
+                    <input type="text" id="api-key" class="w-full p-2 border rounded" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">IMEI</label>
+                    <input type="text" id="imei" class="w-full p-2 border rounded" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard Page -->
+    <div id="dashboard-page" class="hidden min-h-screen p-4">
+        <div class="container mx-auto">
+            <h2 class="text-3xl font-bold mb-4">Trading Dashboard</h2>
+            <button id="logout-btn" class="bg-red-500 text-white px-4 py-2 rounded mb-4">Logout</button>
+
+            <!-- Balance -->
+            <div class="bg-white p-4 rounded-lg shadow mb-4">
+                <h3 class="text-xl font-semibold mb-2">Account Balance</h3>
+                <p id="balance">Loading...</p>
+            </div>
+
+            <!-- Open Positions -->
+            <div class="bg-white p-4 rounded-lg shadow mb-4">
+                <h3 class="text-xl font-semibold mb-2">Open Positions</h3>
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="p-2">Symbol</th>
+                            <th class="p-2">Qty</th>
+                            <th class="p-2">Avg Price</th>
+                            <th class="p-2">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="open-positions"></tbody>
+                </table>
+            </div>
+
+            <!-- Closed Positions -->
+            <div class="bg-white p-4 rounded-lg shadow mb-4">
+                <h3 class="text-xl font-semibold mb-2">Closed Positions</h3>
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="p-2">Symbol</th>
+                            <th class="p-2">Qty</th>
+                            <th class="p-2">P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody id="closed-positions"></tbody>
+                </table>
+            </div>
+
+            <!-- Open Orders -->
+            <div class="bg-white p-4 rounded-lg shadow mb-4">
+                <h3 class="text-xl font-semibold mb-2">Open Orders</h3>
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="p-2">Order ID</th>
+                            <th class="p-2">Symbol</th>
+                            <th class="p-2">Type</th>
+                            <th class="p-2">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="open-orders"></tbody>
+                </table>
+            </div>
+
+            <!-- Closed Orders -->
+            <div class="bg-white p-4 rounded-lg shadow mb-4">
+                <h3 class="text-xl font-semibold mb-2">Closed Orders</h3>
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="p-2">Order ID</th>
+                            <th class="p-2">Symbol</th>
+                            <th class="p-2">Type</th>
+                            <th class="p-2">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="closed-orders"></tbody>
+                </table>
+            </div>
+
+            <!-- Trade Configuration -->
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="text-xl font-semibold mb-2">Trade Configuration</h3>
+                <form id="trade-config-form">
+                    <div class="mb-4">
+                        <label class="block text-gray-700">Instrument Type</label>
+                        <select id="instrument-type" class="w-full p-2 border rounded">
+                            <option value="future">Index Future</option>
+                            <option value="option">Index Option</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700">Index</label>
+                        <select id="index" class="w-full p-2 border rounded">
+                            <option value="NIFTY">NIFTY</option>
+                            <option value="BANKNIFTY">BANKNIFTY</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700">Trade Type</label>
+                        <select id="trade-type" class="w-full p-2 border rounded">
+                            <option value="buy">Buy</option>
+                            <option value="sell">Sell</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700">Expiry</label>
+                        <select id="expiry" class="w-full p-2 border rounded">
+                            <option value="current">Current Week</option>
+                            <option value="next">Next Week</option>
+                        </select>
+                    </div>
+                    <div class="mb-4 hidden" id="option-strike-group">
+                        <label class="block text-gray-700">Strike Selection</label>
+                        <select id="strike" class="w-full p-2 border rounded">
+                            <option value="atm">ATM</option>
+                            <option value="otm1">1st OTM</option>
+                            <option value="otm2">2nd OTM</option>
+                            <option value="itm1">1st ITM</option>
+                            <option value="itm2">2nd ITM</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Save Configuration</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load dashboard after login
+        async function loadDashboard() {
+            const jKey = localStorage.getItem('jKey');
+            if (!jKey) {
+                document.getElementById('login-page').classList.remove('hidden');
+                document.getElementById('dashboard-page').classList.add('hidden');
+                return;
+            }
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('dashboard-page').classList.remove('hidden');
+            updateDashboard();
+        }
+
+        // Login form submission
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const credentials = {
+                userid: document.getElementById('user-id').value,
+                password: document.getElementById('password').value,
+                twoFA: document.getElementById('totp').value,
+                vendor_code: document.getElementById('vendor-code').value,
+                api_secret: document.getElementById('api-key').value,
+                imei: document.getElementById('imei').value
+            };
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(credentials)
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    localStorage.setItem('jKey', result.jKey);
+                    loadDashboard();
+                } else {
+                    document.getElementById('login-error').textContent = result.message;
+                    document.getElementById('login-error').classList.remove('hidden');
+                }
+            } catch (err) {
+                document.getElementById('login-error').textContent = 'Error: ' + err.message;
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('jKey');
+            loadDashboard();
+        });
+
+        // Trade configuration
+        document.getElementById('trade-config-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const config = {
+                instrument_type: document.getElementById('instrument-type').value,
+                index: document.getElementById('index').value,
+                trade_type: document.getElementById('trade-type').value,
+                expiry: document.getElementById('expiry').value,
+                strike: document.getElementById('strike').value
+            };
+            await fetch('/save_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+            alert('Trade configuration saved!');
+        });
+
+        // Toggle strike selection
+        document.getElementById('instrument-type').addEventListener('change', () => {
+            document.getElementById('option-strike-group').classList.toggle('hidden', document.getElementById('instrument-type').value !== 'option');
+        });
+
+        // Update dashboard
+        async function updateDashboard() {
+            try {
+                // Balance
+                const balanceResp = await fetch('/balance');
+                const balance = await balanceResp.json();
+                document.getElementById('balance').textContent = balance.availablecash ? `₹${balance.availablecash}` : 'N/A';
+
+                // Positions
+                const posResp = await fetch('/positions');
+                const positions = await posResp.json();
+                const openPositions = document.getElementById('open-positions');
+                openPositions.innerHTML = positions.filter(p => p.netqty != 0).map(p => `
+                    <tr>
+                        <td class="p-2">${p.tsym}</td>
+                        <td class="p-2">${p.netqty}</td>
+                        <td class="p-2">${p.avgprc}</td>
+                        <td class="p-2">
+                            <button class="bg-red-500 text-white px-2 py-1 rounded square-off" data-symbol="${p.tsym}" data-quantity="${p.netqty}">Square Off</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Orders
+                const orderResp = await fetch('/orders');
+                const orders = await orderResp.json();
+                document.getElementById('open-orders').innerHTML = orders.filter(o => o.status === 'OPEN').map(o => `
+                    <tr>
+                        <td class="p-2">${o.orderno}</td>
+                        <td class="p-2">${o.tsym}</td>
+                        <td class="p-2">${o.trantype}</td>
+                        <td class="p-2">${o.status}</td>
+                    </tr>
+                `).join('');
+                document.getElementById('closed-orders').innerHTML = orders.filter(o => o.status !== 'OPEN').map(o => `
+                    <tr>
+                        <td class="p-2">${o.orderno}</td>
+                        <td class="p-2">${o.tsym}</td>
+                        <td class="p-2">${o.trantype}</td>
+                        <td class="p-2">${o.status}</td>
+                    </tr>
+                `).join('');
+
+                // Mock closed positions
+                document.getElementById('closed-positions').innerHTML = '<tr><td class="p-2" colspan="3">No data</td></tr>';
+
+                // Square-off buttons
+                document.querySelectorAll('.square-off').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        await fetch('/square_off', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                symbol: btn.dataset.symbol,
+                                quantity: parseInt(btn.dataset.quantity)
+                            })
+                        });
+                        updateDashboard();
+                    });
+                });
+            } catch (err) {
+                console.error('Error updating dashboard:', err);
+            }
+        }
+
+        // Initialize
+        loadDashboard();
+    </script>
+</body>
+</html>
