@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = 'my_secure_shoonya_key_123'
-logging.basicConfig(level=logging.DEBUG)  # Increased logging level for debugging
+logging.basicConfig(level=logging.DEBUG)  # Debug logging for detailed output
 
 def load_config():
     try:
@@ -84,6 +84,13 @@ def login():
         pan_or_dob = request.form['pan-or-dob']
 
         logging.info(f"Login attempt for user: {userid}")
+        logging.debug(f"Input parameters: userid={userid}, pan_or_dob={pan_or_dob}, vendor_code={vendor_code}, api_secret={api_secret}, imei={imei}")
+
+        # Validate pan_or_dob format (basic check)
+        if not (len(pan_or_dob) == 10 and pan_or_dob[:5].isalpha() and pan_or_dob[5:9].isdigit() and pan_or_dob[9].isalpha()) and \
+           not (len(pan_or_dob) == 8 and pan_or_dob.isdigit()):
+            logging.error("Invalid PAN or DOB format")
+            return render_template('index.html', error="Invalid PAN (e.g., ABCDE1234F) or DOB (e.g., 01011990)")
 
         # Initialize ShoonyaApi
         try:
@@ -92,8 +99,9 @@ def login():
                 password=password,
                 pan_or_dob=pan_or_dob
             )
+            logging.debug("ShoonyaApi initialized successfully")
         except Exception as e:
-            logging.error(f"ShoonyaApi initialization failed: {str(e)}")
+            logging.error(f"ShoonyaApi initialization failed: {str(e)}", exc_info=True)
             return render_template('index.html', error=f"Initialization error: {str(e)}")
 
         # Attempt login
@@ -106,7 +114,7 @@ def login():
             )
             logging.debug(f"Login response: {login_response}")
         except Exception as e:
-            logging.error(f"Login method failed: {str(e)}")
+            logging.error(f"Login method failed: {str(e)}", exc_info=True)
             return render_template('index.html', error=f"Login method error: {str(e)}")
 
         if login_response and login_response.get('stat') == 'Ok':
@@ -119,7 +127,7 @@ def login():
             logging.error(f"Login failed: {login_response}")
             return render_template('index.html', error="Invalid credentials")
     except Exception as e:
-        logging.error(f"General login error: {str(e)}")
+        logging.error(f"General login error: {str(e)}", exc_info=True)
         return render_template('index.html', error=f"Login error: {str(e)}")
 
 @app.route('/configure', methods=['POST'])
