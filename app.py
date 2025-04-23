@@ -81,13 +81,19 @@ def login():
         vendor_code = request.form['vendor-code']
         api_secret = request.form['api-secret']
         imei = request.form['imei']
+        pan_or_dob = request.form['pan-or-dob']
 
         logging.info(f"Login attempt for user: {userid}")
 
-        shoonya_api = ShoonyaApi()
-        login_response = shoonya_api.login(
-            userid=userid,
+        # Initialize ShoonyaApi with required arguments
+        shoonya_api = ShoonyaApi(
+            username=userid,
             password=password,
+            pan_or_dob=pan_or_dob
+        )
+
+        # Attempt login (adjust based on shoonyapy requirements)
+        login_response = shoonya_api.login(
             twoFA=twoFA,
             vendor_code=vendor_code,
             api_secret=api_secret,
