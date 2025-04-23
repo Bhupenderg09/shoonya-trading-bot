@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoonya Trading Bot Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f4f4f4; }
+        h1, h2 { text-align: center; color: #333; }
+        .config { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        form { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #218838; }
+        .error { color: red; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Welcome, {{ user_id }}!</h1>
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+    <div class="config">
+        <h2>Current Trade Configuration</h2>
+        <p>Instrument Type: {{ config.instrument_type }}</p>
+        <p>Index: {{ config.index }}</p>
+        <p>Trade Type: {{ config.trade_type }}</p>
+        <p>Expiry: {{ config.expiry }}</p>
+        <p>Strike: {{ config.strike }}</p>
+    </div>
+    <form id="trade-config-form" method="POST" action="/configure">
+        <h2>Update Trade Configuration</h2>
+        <select id="instrument-type" name="instrument-type" required>
+            <option value="option" {% if config.instrument_type == 'option' %}selected{% endif %}>Option</option>
+            <option value="future" {% if config.instrument_type == 'future' %}selected{% endif %}>Future</option>
+        </select>
+        <input id="index" name="index" type="text" value="{{ config.index }}" placeholder="Index (e.g., NIFTY)" required>
+        <select id="trade-type" name="trade-type" required>
+            <option value="buy" {% if config.trade_type == 'buy' %}selected{% endif %}>Buy</option>
+            <option value="sell" {% if config.trade_type == 'sell' %}selected{% endif %}>Sell</option>
+        </select>
+        <input id="expiry" name="expiry" type="text" value="{{ config.expiry }}" placeholder="Expiry (e.g., current_week)" required>
+        <input id="strike" name="strike" type="text" value="{{ config.strike }}" placeholder="Strike (e.g., ATM)" required>
+        <button type="submit">Save Configuration</button>
+    </form>
+</body>
+</html>
