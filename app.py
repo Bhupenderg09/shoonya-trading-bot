@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = 'my_secure_shoonya_key_123'
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)  # Increased logging level for debugging
 
 def load_config():
     try:
@@ -85,20 +85,29 @@ def login():
 
         logging.info(f"Login attempt for user: {userid}")
 
-        # Initialize ShoonyaApi with required arguments
-        shoonya_api = ShoonyaApi(
-            username=userid,
-            password=password,
-            pan_or_dob=pan_or_dob
-        )
+        # Initialize ShoonyaApi
+        try:
+            shoonya_api = ShoonyaApi(
+                username=userid,
+                password=password,
+                pan_or_dob=pan_or_dob
+            )
+        except Exception as e:
+            logging.error(f"ShoonyaApi initialization failed: {str(e)}")
+            return render_template('index.html', error=f"Initialization error: {str(e)}")
 
-        # Attempt login (adjust based on shoonyapy requirements)
-        login_response = shoonya_api.login(
-            twoFA=twoFA,
-            vendor_code=vendor_code,
-            api_secret=api_secret,
-            imei=imei
-        )
+        # Attempt login
+        try:
+            login_response = shoonya_api.login(
+                twoFA=twoFA,
+                vendor_code=vendor_code,
+                api_secret=api_secret,
+                imei=imei
+            )
+            logging.debug(f"Login response: {login_response}")
+        except Exception as e:
+            logging.error(f"Login method failed: {str(e)}")
+            return render_template('index.html', error=f"Login method error: {str(e)}")
 
         if login_response and login_response.get('stat') == 'Ok':
             session['user_id'] = userid
@@ -110,8 +119,8 @@ def login():
             logging.error(f"Login failed: {login_response}")
             return render_template('index.html', error="Invalid credentials")
     except Exception as e:
-        logging.error(f"Login error: {str(e)}")
-        return render_template('index.html', error=str(e))
+        logging.error(f"General login error: {str(e)}")
+        return render_template('index.html', error=f"Login error: {str(e)}")
 
 @app.route('/configure', methods=['POST'])
 def configure():
