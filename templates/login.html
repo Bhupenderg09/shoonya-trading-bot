@@ -1,0 +1,76 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoonya Trading Bot - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center">Shoonya Trading Bot Login</h1>
+        <form id="loginForm" class="space-y-4" method="POST" action="/login">
+            <div>
+                <label for="user_id" class="block text-sm font-medium text-gray-700">User ID</label>
+                <input type="text" id="user_id" name="user_id" value="FA25513" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label for="pan_or_dob" class="block text-sm font-medium text-gray-700">PAN/DOB</label>
+                <input type="text" id="pan_or_dob" name="pan_or_dob" value="BWGPS1309P" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label for="vendor_code" class="block text-sm font-medium text-gray-700">Vendor Code</label>
+                <input type="text" id="vendor_code" name="vendor_code" value="FA25513_U" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label for="api_secret" class="block text-sm font-medium text-gray-700">API Secret</label>
+                <input type="text" id="api_secret" name="api_secret" value="18203e199625d0330a6c9dfa9db9620a" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label for="imei" class="block text-sm font-medium text-gray-700">IMEI</label>
+                <input type="text" id="imei" name="imei" value="abc1234" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label for="totp_secret" class="block text-sm font-medium text-gray-700">TOTP Secret</label>
+                <input type="text" id="totp_secret" name="totp_secret" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <button type="submit"
+                    class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Login
+            </button>
+        </form>
+        <p id="errorMessage" class="mt-4 text-red-500 text-center hidden"></p>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    window.location.href = '/dashboard';
+                } else {
+                    document.getElementById('errorMessage').textContent = result.message;
+                    document.getElementById('errorMessage').classList.remove('hidden');
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'An error occurred. Please try again.';
+                document.getElementById('errorMessage').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
+```

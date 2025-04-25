@@ -1,47 +1,192 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shoonya Trading Bot Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f4f4f4; }
-        h1, h2 { text-align: center; color: #333; }
-        .config { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        form { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #218838; }
-        .error { color: red; text-align: center; }
-    </style>
+    <title>Shoonya Trading Bot - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>Welcome, {{ user_id }}!</h1>
-    {% if error %}
-        <p class="error">{{ error }}</p>
-    {% endif %}
-    <div class="config">
-        <h2>Current Trade Configuration</h2>
-        <p>Instrument Type: {{ config.instrument_type }}</p>
-        <p>Index: {{ config.index }}</p>
-        <p>Trade Type: {{ config.trade_type }}</p>
-        <p>Expiry: {{ config.expiry }}</p>
-        <p>Strike: {{ config.strike }}</p>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">Shoonya Trading Bot Dashboard</h1>
+            <a href="/logout" class="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700">Logout</a>
+        </div>
+
+        <!-- Balance -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Account Balance</h2>
+            <p id="balance" class="text-lg">Loading...</p>
+        </div>
+
+        <!-- Positions -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Open Positions</h2>
+            <table id="positionsTable" class="w-full text-left">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-2">Symbol</th>
+                        <th class="px-4 py-2">Quantity</th>
+                        <th class="px-4 py-2">P&L</th>
+                        <th class="px-4 py-2">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="positionsBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Orders -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Recent Orders</h2>
+            <table id="ordersTable" class="w-full text-left">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-2">Order ID</th>
+                        <th class="px-4 py-2">Symbol</th>
+                        <th class="px-4 py-2">Status</th>
+                        <th class="px-4 py-2">Quantity</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Trade Configuration -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4">Trade Configuration</h2>
+            <form id="configForm" class="space-y-4">
+                <div>
+                    <label for="instrument_type" class="block text-sm font-medium text-gray-700">Instrument Type</label>
+                    <select id="instrument_type" name="instrument_type"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                        <option value="index">Index</option>
+                        <option value="option">Option</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="index" class="block text-sm font-medium text-gray-700">Index</label>
+                    <select id="index" name="index"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                        <option value="NIFTY">NIFTY</option>
+                        <option value="BANKNIFTY">BANKNIFTY</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="trade_type" class="block text-sm font-medium text-gray-700">Trade Type</label>
+                    <select id="trade_type" name="trade_type"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                        <option value="buy">Buy</option>
+                        <option value="sell">Sell</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="expiry" class="block text-sm font-medium text-gray-700">Expiry</label>
+                    <input type="text" id="expiry" name="expiry" placeholder="e.g., 25APR25"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
+                    <label for="strike" class="block text-sm font-medium text-gray-700">Strike</label>
+                    <select id="strike" name="strike"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                        <option value="atm">ATM</option>
+                        <option value="otm1">OTM1</option>
+                        <option value="otm2">OTM2</option>
+                        <option value="itm1">ITM1</option>
+                        <option value="itm2">ITM2</option>
+                    </select>
+                </div>
+                <button type="submit"
+                        class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700">
+                    Save Configuration
+                </button>
+            </form>
+        </div>
     </div>
-    <form id="trade-config-form" method="POST" action="/configure">
-        <h2>Update Trade Configuration</h2>
-        <select id="instrument-type" name="instrument-type" required>
-            <option value="option" {% if config.instrument_type == 'option' %}selected{% endif %}>Option</option>
-            <option value="future" {% if config.instrument_type == 'future' %}selected{% endif %}>Future</option>
-        </select>
-        <input id="index" name="index" type="text" value="{{ config.index }}" placeholder="Index (e.g., NIFTY)" required>
-        <select id="trade-type" name="trade-type" required>
-            <option value="buy" {% if config.trade_type == 'buy' %}selected{% endif %}>Buy</option>
-            <option value="sell" {% if config.trade_type == 'sell' %}selected{% endif %}>Sell</option>
-        </select>
-        <input id="expiry" name="expiry" type="text" value="{{ config.expiry }}" placeholder="Expiry (e.g., current_week)" required>
-        <input id="strike" name="strike" type="text" value="{{ config.strike }}" placeholder="Strike (e.g., ATM)" required>
-        <button type="submit">Save Configuration</button>
-    </form>
+
+    <script>
+        async function fetchBalance() {
+            const response = await fetch('/get_balance');
+            const data = await response.json();
+            if (data.status === 'success') {
+                document.getElementById('balance').textContent = `₹${data.balance}`;
+            } else {
+                document.getElementById('balance').textContent = 'Error fetching balance';
+            }
+        }
+
+        async function fetchPositions() {
+            const response = await fetch('/get_positions');
+            const data = await response.json();
+            const tbody = document.getElementById('positionsBody');
+            tbody.innerHTML = '';
+            if (data.status === 'success') {
+                data.positions.forEach(pos => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-4 py-2">${pos.tsym}</td>
+                        <td class="px-4 py-2">${pos.netqty}</td>
+                        <td class="px-4 py-2">${pos.upl}</td>
+                        <td class="px-4 py-2">
+                            <button onclick="squareOff('${pos.tsym}', ${pos.netqty})"
+                                    class="bg-red-600 text-white py-1 px-2 rounded hover:bg-red-700">
+                                Square Off
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        async function fetchOrders() {
+            const response = await fetch('/get_orders');
+            const data = await response.json();
+            const tbody = document.getElementById('ordersBody');
+            tbody.innerHTML = '';
+            if (data.status === 'success') {
+                data.orders.forEach(order => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-4 py-2">${order.norenordno}</td>
+                        <td class="px-4 py-2">${order.tsym}</td>
+                        <td class="px-4 py-2">${order.status}</td>
+                        <td class="px-4 py-2">${order.qty}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        async function squareOff(symbol, quantity) {
+            const response = await fetch('/square_off', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ symbol, quantity })
+            });
+            const data = await response.json();
+            alert(data.message);
+            fetchPositions();
+        }
+
+        document.getElementById('configForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const config = Object.fromEntries(formData);
+            const response = await fetch('/save_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+            const data = await response.json();
+            alert(data.message);
+        });
+
+        // Initial data fetch
+        fetchBalance();
+        fetchPositions();
+        fetchOrders();
+    </script>
 </body>
 </html>
+```
